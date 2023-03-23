@@ -13,15 +13,25 @@ ACubeActor::ACubeActor()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	
-	BoxCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("RootComponent"));
-	RootComponent = BoxCollision;
-	BoxCollision->SetSimulatePhysics(true);
-	//BoxCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	BoxCollision->OnComponentBeginOverlap.AddDynamic(this, &ACubeActor::CubeCollisionSphereBeginOverlap);
+	
 
 	CubeMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Cube Mesh"));
-	CubeMesh->SetupAttachment(BoxCollision);
+	RootComponent = CubeMesh;
+	CubeMesh->SetGenerateOverlapEvents(false);
 	CubeMesh->SetSimulatePhysics(false);
+	CubeMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	CubeMesh->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	CubeMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+
+	BoxCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("RootComponent"));
+	BoxCollision->SetupAttachment(CubeMesh);
+	BoxCollision->SetSimulatePhysics(false);
+	BoxCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	BoxCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	//BoxCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	BoxCollision->OnComponentBeginOverlap.AddDynamic(this, 
+		&ACubeActor::CubeCollisionSphereBeginOverlap);
+
 	
 	CubeValueText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("Value text"));
 	CubeValueText->SetupAttachment(CubeMesh);
@@ -29,13 +39,6 @@ ACubeActor::ACubeActor()
 	CubeValueText->SetHorizontalAlignment(EHTA_Center);
 	
 }
-
-/*
-bool ACubeActor::SetStartMove()
-{
-	
-}
-*/
 
 void ACubeActor::MoveForward(float DeltaTime)
 {
@@ -66,11 +69,17 @@ void ACubeActor::Tick(float DeltaTime)
 	MoveForward(DeltaTime);
 }
 
-void ACubeActor::CubeCollisionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ACubeActor::CubeCollisionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
+	AActor* OtherActor,	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, 
+	bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("ACubeActor::CubeCollisionSphereBeginOverlap - BeginOverlap"));
-	bStartMove = false;
-	BoxCollision->SetSimulatePhysics(true);
+	
+		CubeMesh->SetSimulatePhysics(true);
+		UE_LOG(LogTemp, Warning, TEXT("ACubeActor::CubeCollisionSphereBeginOverlap - BeginOverlap Actor: %s"), *OtherActor->GetName());
+		//bStartMove = false;
+		
+	//Destroy();
+	
 }
+	
 

@@ -17,6 +17,7 @@ ACubeGamePawn::ACubeGamePawn()
 	
 	BoxCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision"));
 	BoxCollision->SetupAttachment(RootComponent);
+	BoxCollision->SetCollisionObjectType(ECC_Pawn);
 
 	CubePointArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
 	CubePointArrow->SetRelativeLocation(FVector(0,0,100));
@@ -67,7 +68,7 @@ void ACubeGamePawn::Fire()
 	{
 		FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
 		CubeActor->DetachFromActor(FDetachmentTransformRules( Rule, false));
-		CubeActor->bStartMove = true;
+		CubeActor->bStartMove = true; 
 		/*FVector Force = ImpulseValue * GetActorForwardVector();
 		CubeActor->BoxCollision->SetSimulatePhysics(true);
 		CubeActor->BoxCollision->AddImpulse(Force, NAME_None, true);*/
@@ -118,8 +119,9 @@ void ACubeGamePawn::SpawnCube()
 	FRotator Rotation = GetActorRotation();
 	ACubeActor* SpawnedActor = GetWorld()->SpawnActor<ACubeActor>(CubeActorToSpawn, Location, Rotation);
 	
-	FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
+	FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, true);
 	SpawnedActor->AttachToActor(this, Rule, NAME_None);
 	CubeActor = SpawnedActor;
+
 }
 

@@ -63,7 +63,7 @@ public:
 	UFUNCTION()
 	void Fire();
 
-	float SpawnTimer = 2.0f;
+	float SpawnTimer = 1.0f;
 	float SpawnTime = SpawnTimer;
 	
 	void SpawnCubeTick(float DeltaTime);
