@@ -7,7 +7,10 @@
 #include "Components/ArrowComponent.h"
 #include "Components/BoxComponent.h"
 #include "CubeActor.h"
+#include "Components/TextRenderComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 ACubeGamePawn::ACubeGamePawn()
@@ -25,9 +28,9 @@ ACubeGamePawn::ACubeGamePawn()
 	//CubePointArrow->ArrowLength(50.0f);
 	CubePointArrow->SetupAttachment(BoxCollision);
 
-	CubeMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Cube Mesh"));
+	/*CubeMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Cube Mesh"));
 	CubeMesh->SetupAttachment(BoxCollision);
-	CubeMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	CubeMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);*/
 	
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);
@@ -44,8 +47,9 @@ ACubeGamePawn::ACubeGamePawn()
 void ACubeGamePawn::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	SpawnCube();
+
 }
 
 // Called every frame
@@ -69,9 +73,6 @@ void ACubeGamePawn::Fire()
 		FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
 		CubeActor->DetachFromActor(FDetachmentTransformRules( Rule, false));
 		CubeActor->bStartMove = true; 
-		/*FVector Force = ImpulseValue * GetActorForwardVector();
-		CubeActor->BoxCollision->SetSimulatePhysics(true);
-		CubeActor->BoxCollision->AddImpulse(Force, NAME_None, true);*/
 		CubeActor =  nullptr;
 		bIsSpawn = false;
 	}
@@ -114,14 +115,46 @@ void ACubeGamePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 void ACubeGamePawn::SpawnCube()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Fire"));
-	FVector Location = CubePointArrow->GetComponentLocation();
-	FRotator Rotation = GetActorRotation();
-	ACubeActor* SpawnedActor = GetWorld()->SpawnActor<ACubeActor>(CubeActorToSpawn, Location, Rotation);
-	
-	FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, true);
-	SpawnedActor->AttachToActor(this, Rule, NAME_None);
-	CubeActor = SpawnedActor;
 
+	FTransform spawnTransform(GetActorRotation(),
+				CubePointArrow->GetComponentLocation(), GetActorScale());
+	
+	ACubeActor* Cube = GetWorld()->SpawnActorDeferred<ACubeActor>(CubeActorToSpawn,
+				spawnTransform, this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+
+	FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, true);
+
+	//Get random num of valo array fore new cube
+	int randomInt = UKismetMathLibrary::RandomInteger(CubeNumArray.Num()-1);
+
+	Cube->CubeValueText->SetTextRenderColor(CubeNumColor[randomInt]);
+	Cube->CubeValue = CubeNumArray[randomInt];
+
+	UMaterialInstanceDynamic* CubeMaterial = UMaterialInstanceDynamic::Create(Cube->CubeMesh->GetMaterial(0), Cube);
+	CubeMaterial->SetVectorParameterValue(FName(TEXT("GlowColor")), CubeNumColor[randomInt]);
+	CubeMaterial->SetVectorParameterValue(FName(TEXT("GrooveColor")), CubeNumColor[randomInt]);
+	Cube->CubeMesh->SetMaterial(0, CubeMaterial);
+	
+	Cube->AttachToActor(this, Rule, NAME_None);
+	CubeActor = Cube;
+
+	UGameplayStatics::FinishSpawningActor(Cube, spawnTransform);
+}
+
+void ACubeGamePawn::CreateCubeParams(int Value)
+{
+	if (Value>MaxCubeVal)
+	{
+		MaxCubeVal = MaxCubeVal * 2;
+		CubeNumArray.AddUnique(MaxCubeVal);
+
+		uint8 ColorR = UKismetMathLibrary::RandomInteger(255);
+		uint8 ColorG = UKismetMathLibrary::RandomInteger(255);
+		uint8 ColorB = UKismetMathLibrary::RandomInteger(255);
+		
+		CubeNumColor.AddUnique(FColor(ColorR,ColorG,ColorB));
+
+		
+	}
 }
 

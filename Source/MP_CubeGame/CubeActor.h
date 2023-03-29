@@ -3,8 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 #include "GameFramework/Actor.h"
 #include "CubeActor.generated.h"
+
+class ACubeGamePawn;
 
 UCLASS()
 class MP_CUBEGAME_API ACubeActor : public AActor
@@ -26,8 +29,28 @@ public:
 
 	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Components")
 	float CubeValue = 2;
-	FString TheFloatStr;
 
+	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Components")
+	TSubclassOf<ACubeActor> SpawnCubeClass;
+
+	UPROPERTY(EditInstanceOnly, BluePrintReadWrite, Category = "Components")
+	ACubeGamePawn* CubePawn;
+
+	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Components")
+	class USoundBase* MergeSound = nullptr;
+
+	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Components")
+	class USoundBase* HitSound = nullptr;
+
+	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Components")
+	class UNiagaraSystem* CubeExplodeVFX = nullptr;
+	
+	
+	FString CubeValStr;
+	
+	TArray<ACubeActor*> CubesFieldArray;
+	
+	void SetText();
 	
 	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Components")
 	float Speed = 1200.0f;
@@ -36,6 +59,12 @@ public:
 	//bool SetStartMove();
 	void MoveForward(float DeltaTime);
 
+	void PlayHitSound();
+	float PlayHitSoundTimer = 1.0f;
+	float PlayHitSoundTime = PlayHitSoundTimer;
+	bool isCanPlay = true;
+	void PlayHitSoundTick(float DeltaTime);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -43,6 +72,8 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	void LaunchToSeem(int8 valToArray, ACubeActor* CubeToLaonch);
 
 	UFUNCTION()
 	void CubeCollisionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
